@@ -18,9 +18,6 @@
             android:name=".ViewRecordActivity"
             android:exported="false" />
         <activity
-            android:name=".HistoryBD"
-            android:exported="false" />
-        <activity
             android:name=".Help"
             android:exported="false" />
         <activity

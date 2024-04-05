@@ -14,20 +14,17 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,17 +63,6 @@ public class MainActivity_breakdown extends AppCompatActivity {
         spares = findViewById(R.id.enterspare);
         hrstext = findViewById(R.id.totalbdtime);
 
-        DocumentReference documentReference = fStore.collection("users").document(userId);
-
-        documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
-            @Override
-            public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (value != null) {
-                    textView1.setText(value.getString("fName"));
-                }
-            }
-        });
-
         if (user == null) {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
@@ -98,24 +84,22 @@ public class MainActivity_breakdown extends AppCompatActivity {
         time.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View a) {
-                openDialog1();
+                openTimePickerDialog();
             }
         });
 
         date.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openDialog();
+                openDatePickerDialog();
             }
         });
 
         submit.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 processInsert();
             }
-
         });
 
         back.setOnClickListener(new View.OnClickListener() {
@@ -135,43 +119,58 @@ public class MainActivity_breakdown extends AppCompatActivity {
         });
     }
 
-    private void openDialog() {
-        DatePickerDialog dialog = new DatePickerDialog(MainActivity_breakdown.this, new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                datetext.setText(String.valueOf(dayOfMonth) + "." + String.valueOf(month + 1) + "." + String.valueOf(year));
-            }
-        }, 2024, 2, 1); // Month is zero-based, so 2 is March
+    private void openDatePickerDialog() {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog dialog = new DatePickerDialog(MainActivity_breakdown.this,
+                new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        datetext.setText(String.valueOf(dayOfMonth) + "." + String.valueOf(month + 1) + "." + String.valueOf(year));
+                    }
+                }, year, month, dayOfMonth);
 
         dialog.show();
     }
 
-    private void openDialog1() {
-        TimePickerDialog dialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                timetext.setText(String.valueOf(hourOfDay) + ":" + String.valueOf(minute));
-            }
-        }, 15, 0, true);
+    private void openTimePickerDialog() {
+        Calendar calendar = Calendar.getInstance();
+        int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog dialog = new TimePickerDialog(MainActivity_breakdown.this,
+                new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        timetext.setText(String.format("%02d:%02d", hourOfDay, minute));
+                    }
+                }, hourOfDay, minute, true);
+
         dialog.show();
     }
 
     private void processInsert() {
         Map<String, Object> map = new HashMap<>();
-        map.put("a1", user.getUid()); // Use UID as a more secure identifier
-        map.put("a2", cause_of_bd.getText().toString());
-        map.put("a3", spares.getText().toString());
-        map.put("a4", timetext.getText().toString());
-        map.put("a5", textView1.getText().toString());
-        map.put("a6", hrstext.getText().toString()); // Fixed the typo in the key
-        map.put("a7", datetext.getText().toString());
-        map.put("a8", nature_of_problem.getText().toString());
+        map.put("Breakdown_ID", user.getUid()); // Use UID as a more secure identifier
+        map.put("cause_of_bd", cause_of_bd.getText().toString());
+        map.put("spares", spares.getText().toString());
+        map.put("timetext", timetext.getText().toString());
+        map.put("User_ID", textView.getText().toString());
+        map.put("TotalHrOfBreakdown", hrstext.getText().toString()); // Fixed the typo in the key
+        map.put("Date", datetext.getText().toString());
+        map.put("nature_of_problem", nature_of_problem.getText().toString());
 
-        FirebaseDatabase.getInstance().getReference().child("Breakdown").push()
-                .setValue(map)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
+        // Get a reference to the Firestore collection "breakdown"
+        CollectionReference breakdownRef = fStore.collection("breakdown");
+
+        // Add the document to the collection
+        breakdownRef.add(map)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
-                    public void onSuccess(Void unused) {
+                    public void onSuccess(DocumentReference documentReference) {
                         Toast.makeText(getApplicationContext(), "Inserted Successfully", Toast.LENGTH_SHORT).show();
 
                         // Move the logout code here

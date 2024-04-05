@@ -65,7 +65,13 @@ public class MainActivity4 extends AppCompatActivity {
         documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
-                textView1.setText(value.getString("fName"));
+                if (value != null && value.exists()) {
+                    textView1.setText(value.getString("fName"));
+                } else {
+                    // Handle the case when document does not exist or has null data
+                    // For example, set a default value for textView1
+                    textView1.setText("Default Name");
+                }
             }
         });
 

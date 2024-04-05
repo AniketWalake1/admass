@@ -1,20 +1,23 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,58 +25,54 @@ import java.util.List;
 public class ViewRecordActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private RecordAdapter recordAdapter;
+    private RecordAdapter adapter;
     private List<RecordModel> recordList;
-
-    private FirebaseAuth auth;
-    private FirebaseUser user;
+    private FirebaseFirestore firestore;
+    private Button back;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_record);
 
         recyclerView = findViewById(R.id.recyclerView);
+        back =findViewById(R.id.backView);
+
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(ViewRecordActivity.this, MainActivity_breakdown.class);
+                startActivity(intent);
+            }
+        });
+        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
         recordList = new ArrayList<>();
-        recordAdapter = new RecordAdapter(recordList);
-        recyclerView.setAdapter(recordAdapter);
+        adapter = new RecordAdapter(this, recordList);
+        recyclerView.setAdapter(adapter);
 
-        auth = FirebaseAuth.getInstance();
-        user = auth.getCurrentUser();
-
-        if (user == null) {
-            // User is not authenticated, handle accordingly
-            // For example, redirect to login screen
-        } else {
-            // User is authenticated, proceed to fetch records
-            fetchRecordsFromDatabase();
-        }
+        firestore = FirebaseFirestore.getInstance();
+        loadRecords();
     }
 
-    private void fetchRecordsFromDatabase() {
-        // Adjust the reference path based on your database structure
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child("Breakdown");
-
-        // Add a listener to fetch data from the database
-        databaseReference.addValueEventListener(new ValueEventListener() {
+    private void loadRecords() {
+        CollectionReference recordsRef = firestore.collection("breakdown");
+        recordsRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                recordList.clear(); // Clear the list before adding new data
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    // Map the data to your RecordModel class
-                    RecordModel record = snapshot.getValue(RecordModel.class);
-                    if (record != null) {
-                        recordList.add(record);
-                    }
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                    RecordModel record = documentSnapshot.toObject(RecordModel.class);
+                    recordList.add(record);
                 }
-                recordAdapter.notifyDataSetChanged(); // Notify the adapter of the data change
+                adapter.notifyDataSetChanged();
             }
-
+        }).addOnFailureListener(new OnFailureListener() {
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("ViewRecordActivity", "Failed to read value.", error.toException());
+            public void onFailure(@NonNull Exception e) {
+                Log.e("ViewRecordActivity", "Error fetching records: " + e.getMessage());
             }
         });
     }
 }
+

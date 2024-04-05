@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,16 +13,18 @@ import java.util.List;
 
 public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordViewHolder> {
 
+    private Context context;
     private List<RecordModel> recordList;
 
-    public RecordAdapter(List<RecordModel>recordList) {
+    public RecordAdapter(Context context, List<RecordModel> recordList) {
+        this.context = context;
         this.recordList = recordList;
     }
 
     @NonNull
     @Override
     public RecordViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_record, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.singlerow, parent, false);
         return new RecordViewHolder(view);
     }
 
@@ -36,31 +39,31 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         return recordList.size();
     }
 
-    static class RecordViewHolder extends RecyclerView.ViewHolder {
+    public class RecordViewHolder extends RecyclerView.ViewHolder {
 
-        TextView causeOfBDTextView, sparesTextView, timetextTextView, textView1TextView,
-                hrstextTextView, datetextTextView, natureOfProblemTextView;
+        private TextView textView1, textView2, textView3, textView4, textView5, textView6, textView7, textView8;
 
         public RecordViewHolder(@NonNull View itemView) {
             super(itemView);
-
-            causeOfBDTextView = itemView.findViewById(R.id.causeOfBDTextView);
-            sparesTextView = itemView.findViewById(R.id.sparesTextView);
-            timetextTextView = itemView.findViewById(R.id.timetextTextView);
-            textView1TextView = itemView.findViewById(R.id.textView1TextView);
-            hrstextTextView = itemView.findViewById(R.id.hrstextTextView);
-            datetextTextView = itemView.findViewById(R.id.datetextTextView);
-            natureOfProblemTextView = itemView.findViewById(R.id.natureOfProblemTextView);
+            textView1 = itemView.findViewById(R.id.CauseBDview);
+            textView2 = itemView.findViewById(R.id.SparesBDview);
+            textView3 = itemView.findViewById(R.id.TimeBDview);
+            textView4 = itemView.findViewById(R.id.DateBDview);
+            textView5 = itemView.findViewById(R.id.OPnametext); // Corrected assignment
+            textView6 = itemView.findViewById(R.id.TotalBDview); // Corrected assignment
+            textView7 = itemView.findViewById(R.id.NatureBDview); // Corrected assignment
+            textView8 = itemView.findViewById(R.id.OPIDview); // Corrected assignment
         }
 
         public void bind(RecordModel record) {
-            causeOfBDTextView.setText(record.getA2());
-            sparesTextView.setText(record.getA3());
-            timetextTextView.setText(record.getA4());
-            textView1TextView.setText(record.getA5());
-            hrstextTextView.setText(record.getA6());
-            datetextTextView.setText(record.getA7());
-            natureOfProblemTextView.setText(record.getA8());
+            textView1.setText(record.getCause_of_bd());
+            textView2.setText(record.getSpares());
+            textView3.setText(record.getTimetext());
+            textView4.setText(record.getDate());
+            textView5.setText(record.getBreakdown_ID());
+            textView6.setText(record.getTotalHrOfBreakdown());
+            textView7.setText(record.getNature_of_problem());
+            textView8.setText(record.getUser_ID());
         }
     }
 }

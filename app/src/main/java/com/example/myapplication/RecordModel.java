@@ -1,95 +1,95 @@
 package com.example.myapplication;
 
+// RecordModel.java
 public class RecordModel {
 
-    private String a1; // UID or user identifier
-    private String a2; // cause_of_bd
-    private String a3; // spares
-    private String a4; // timetext
-    private String a5; // textView1
-    private String a6; // hrstext
-    private String a7; // datetext
-    private String a8; // nature_of_problem
+    private String Breakdown_ID;
+    private String cause_of_bd;
+    private String spares;
+    private String timetext;
+    private String Date;
+    private String nature_of_problem;
+    private String User_ID;
+    private String TotalHrOfBreakdown;
 
-    // Add other necessary fields
-
-    // Create a default constructor
     public RecordModel() {
+        // Default constructor required for Firestore to be able to convert documents to objects
     }
 
-    public RecordModel(String a1, String a2, String a3, String a4, String a5, String a6, String a7, String a8) {
-        this.a1 = a1;
-        this.a2 = a2;
-        this.a3 = a3;
-        this.a4 = a4;
-        this.a5 = a5;
-        this.a6 = a6;
-        this.a7 = a7;
-        this.a8 = a8;
+    public RecordModel(String breakdown_ID, String cause_of_bd, String spares, String timetext, String date, String nature_of_problem, String user_ID, String totalHrOfBreakdown) {
+        Breakdown_ID = breakdown_ID;
+        this.cause_of_bd = cause_of_bd;
+        this.spares = spares;
+        this.timetext = timetext;
+        Date = date;
+        this.nature_of_problem = nature_of_problem;
+        User_ID = user_ID;
+        TotalHrOfBreakdown = totalHrOfBreakdown;
     }
 
-    // Create getters and setters for all fields
-    public String getA1() {
-        return a1;
+
+    public String getBreakdown_ID() {
+        return Breakdown_ID;
     }
 
-    public void setA1(String a1) {
-        this.a1 = a1;
+    public void setBreakdown_ID(String breakdown_ID) {
+        Breakdown_ID = breakdown_ID;
     }
 
-    public String getA2() {
-        return a2;
+    public String getNature_of_problem() {
+        return nature_of_problem;
     }
 
-    public void setA2(String a2) {
-        this.a2 = a2;
+    public void setNature_of_problem(String nature_of_problem) {
+        this.nature_of_problem = nature_of_problem;
     }
 
-    public String getA3() {
-        return a3;
+    public String getUser_ID() {
+        return User_ID;
     }
 
-    public void setA3(String a3) {
-        this.a3 = a3;
+    public void setUser_ID(String user_ID) {
+        User_ID = user_ID;
     }
 
-    public String getA4() {
-        return a4;
+    public String getTotalHrOfBreakdown() {
+        return TotalHrOfBreakdown;
     }
 
-    public void setA4(String a4) {
-        this.a4 = a4;
+    public void setTotalHrOfBreakdown(String totalHrOfBreakdown) {
+        TotalHrOfBreakdown = totalHrOfBreakdown;
     }
 
-    public String getA5() {
-        return a5;
+
+    public String getCause_of_bd() {
+        return cause_of_bd;
     }
 
-    public void setA5(String a5) {
-        this.a5 = a5;
+    public void setCause_of_bd(String cause_of_bd) {
+        this.cause_of_bd = cause_of_bd;
     }
 
-    public String getA6() {
-        return a6;
+    public String getSpares() {
+        return spares;
     }
 
-    public void setA6(String a6) {
-        this.a6 = a6;
+    public void setSpares(String spares) {
+        this.spares = spares;
     }
 
-    public String getA7() {
-        return a7;
+    public String getTimetext() {
+        return timetext;
     }
 
-    public void setA7(String a7) {
-        this.a7 = a7;
+    public void setTimetext(String timetext) {
+        this.timetext = timetext;
     }
 
-    public String getA8() {
-        return a8;
+    public String getDate() {
+        return Date;
     }
 
-    public void setA8(String a8) {
-        this.a8 = a8;
+    public void setDate(String date) {
+        this.Date = date;
     }
 }
