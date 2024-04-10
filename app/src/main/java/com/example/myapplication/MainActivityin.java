@@ -2,7 +2,6 @@ package com.example.myapplication;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -10,27 +9,35 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivityin extends AppCompatActivity {
 
     private Button comp, logout, submitRecord;
     private FirebaseUser user;
-    private TextView textView, textView1, shift, time;
+    private TextView textView, textView1, shift, todayDateTextView, time;
     private FirebaseFirestore fStore;
     private String userId;
 
     // EditText references for data collection
-    private EditText e1, e3, e4, e5, e6, e13, e14, e15, e16, e17, e18, e20, e21, e22, e26;
+    private EditText e, e1, e3, e4, e5, e6, e13, e14, e15, e16, e17, e18, e20, e21, e22, e26;
 
     // CheckBox references for Yes/No data
     private CheckBox e2, e7, e8, e9, e10, e11, e12, e19, e23, e24, e25;
@@ -41,6 +48,14 @@ public class MainActivityin extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main_activityin);
 
+        // Check if the user is logged in, if not, start MainActivity
+        setupFirebase();
+        if (user == null) {
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            finish();
+            return;
+        }
+
         // Initialize button, text view, and checkbox references
         comp = findViewById(R.id.b2);
         logout = findViewById(R.id.button7);
@@ -48,9 +63,34 @@ public class MainActivityin extends AppCompatActivity {
         textView1 = findViewById(R.id.user2);
         shift = findViewById(R.id.shiftshow);
         time = findViewById(R.id.time1);
-        submitRecord = findViewById(R.id.SubmitRecord); // Assuming submit record button ID
+        submitRecord = findViewById(R.id.SubmitRecord);
+        todayDateTextView = findViewById(R.id.todaysDateTextView);
+        DocumentReference documentReference = fStore.collection("users").document(userId);
+        documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+                if (value != null && value.exists()) {
+                    textView1.setText(value.getString("fName"));
+                } else {
+                    // Handle the case when document does not exist or has null data
+                    // For example, set a default value for textView1
+                    textView1.setText("Default Name");
+                }
+            }
+        });
 
-        // Initialize edit text references
+        // Set the user's email in the textView
+        textView.setText(user.getEmail());
+
+        // Get today's date and format it
+        Calendar calendar = Calendar.getInstance();
+        Date todayDate = calendar.getTime();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        String formattedDate = dateFormat.format(todayDate);
+        todayDateTextView.setText(formattedDate);
+
+        // Initialize edit text and check box references
+        e = findViewById(R.id.e);
         e1 = findViewById(R.id.e1);
         e3 = findViewById(R.id.e3);
         e4 = findViewById(R.id.e4);
@@ -67,8 +107,7 @@ public class MainActivityin extends AppCompatActivity {
         e22 = findViewById(R.id.e22);
         e26 = findViewById(R.id.e26);
 
-        // Initialize check box references
-        e2 = findViewById(R.id.e2); // Replace with actual IDs for your check boxes
+        e2 = findViewById(R.id.e2);
         e7 = findViewById(R.id.e7);
         e8 = findViewById(R.id.e8);
         e9 = findViewById(R.id.e9);
@@ -80,9 +119,6 @@ public class MainActivityin extends AppCompatActivity {
         e24 = findViewById(R.id.e24);
         e25 = findViewById(R.id.e25);
 
-
-
-        setupFirebase();
         updateShiftBasedOnTime();
 
         logout.setOnClickListener(v -> {
@@ -91,18 +127,14 @@ public class MainActivityin extends AppCompatActivity {
             finish();
         });
 
-        comp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                comp.setBackgroundColor(getResources().getColor(R.color.blue));
-                Intent intent1 = new Intent(MainActivityin.this, MainActivity5.class);
-                startActivity(intent1);
-            }
+        comp.setOnClickListener(v -> {
+            comp.setBackgroundColor(getResources().getColor(R.color.blue));
+            startActivity(new Intent(MainActivityin.this, MainActivity5.class));
         });
 
         submitRecord.setOnClickListener(v -> {
             saveReportToFirestore();
-            clearFields(); // Call clearFields method after successful save
+            clearFields();
         });
     }
 
@@ -111,92 +143,57 @@ public class MainActivityin extends AppCompatActivity {
         user = auth.getCurrentUser();
         fStore = FirebaseFirestore.getInstance();
         userId = auth.getCurrentUser().getUid();
-
-        if (user == null) {
-            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            startActivity(intent);
-            finish();
-        } else {
-            textView.setText(user.getEmail());
-        }
     }
+
     private void updateShiftBasedOnTime() {
         Calendar calendar = Calendar.getInstance();
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
 
         if (hourOfDay >= 8 && hourOfDay < 16) {
-            shift.setText("1st Shift");
+            shift.setText(R.string.first_shift);
         } else if (hourOfDay >= 16 && hourOfDay < 22) {
-            shift.setText("2nd Shift");
+            shift.setText(R.string.second_shift);
         } else {
-            shift.setText("3rd Shift");
+            shift.setText(R.string.third_shift);
         }
     }
+
     private void saveReportToFirestore() {
         // Create a Map to store report data
         Map<String, Object> reportData = new HashMap<>();
 
         // Get values from EditTexts and format checkboxes
-        String e1Value = e1.getText().toString().trim(); // Assuming e1 is the first EditText
-        String e3Value = e3.getText().toString().trim();
-        String e4Value = e4.getText().toString().trim();
-        String e5Value = e5.getText().toString().trim();
-        String e6Value = e6.getText().toString().trim();
-        String e13Value = e13.getText().toString().trim();
-        String e14Value = e14.getText().toString().trim();
-        String e15Value = e15.getText().toString().trim();
-        String e16Value = e16.getText().toString().trim();
-        String e17Value = e17.getText().toString().trim();
-        String e18Value = e18.getText().toString().trim();
-        String e20Value = e20.getText().toString().trim();
-        String e21Value = e21.getText().toString().trim();
-        String e22Value = e22.getText().toString().trim();
-        String e26Value = e26.getText().toString().trim();
-
-
-
-        boolean e2Checked = e2.isChecked();
-        boolean e7Checked = e7.isChecked();
-        boolean e8Checked = e8.isChecked();
-        boolean e9Checked = e9.isChecked();
-        boolean e10Checked = e10.isChecked();
-        boolean e11Checked = e11.isChecked();
-        boolean e12Checked = e12.isChecked();
-        boolean e19Checked = e19.isChecked();
-        boolean e23Checked = e23.isChecked();
-        boolean e24Checked = e24.isChecked();
-        boolean e25Checked = e25.isChecked();
-
-
-
-        // Add data to the report map
-        reportData.put("e1", e1Value);
-        reportData.put("e2", e2Checked ? "Yes" : "No");
-        reportData.put("e3", e3Value);
-        reportData.put("e4", e4Value);
-        reportData.put("e5", e5Value);
-        reportData.put("e6", e6Value);
-        reportData.put("e7", e7Checked ? "Yes" : "No");
-        reportData.put("e8", e8Checked ? "Yes" : "No");
-        reportData.put("e9", e9Checked ? "Yes" : "No");
-        reportData.put("e10", e10Checked ? "Yes" : "No");
-        reportData.put("e11", e11Checked ? "Yes" : "No");
-        reportData.put("e12", e12Checked ? "Yes" : "No");
-        reportData.put("e13", e13Value);
-        reportData.put("e14", e14Value);
-        reportData.put("e15", e15Value);
-        reportData.put("e16", e16Value);
-        reportData.put("e17", e17Value);
-        reportData.put("e18", e18Value);
-        reportData.put("e19", e19Checked ? "Yes" : "No");
-        reportData.put("e20", e20Value);
-        reportData.put("e21", e21Value);
-        reportData.put("e22", e22Value);
-        reportData.put("e23", e23Checked ? "Yes" : "No");
-        reportData.put("e24", e24Checked ? "Yes" : "No");
-        reportData.put("e25", e25Checked ? "Yes" : "No");
-        reportData.put("e26", e26Value);
-
+        reportData.put("time", time.getText().toString().trim());
+        reportData.put("Shift", shift.getText().toString().trim());
+        reportData.put("Date", todayDateTextView.getText().toString().trim());
+        reportData.put("OpName", textView1.getText().toString().trim());
+        reportData.put("JobNumber", e.getText().toString().trim());
+        reportData.put("BoreDiameter_70", e1.getText().toString().trim());
+        reportData.put("BoreDiameter_180", e2.isChecked() ? "Yes" : "No");
+        reportData.put("BoreDiameter_32", e3.getText().toString().trim());
+        reportData.put("OuterDiameter_0215", e4.getText().toString().trim());
+        reportData.put("OuterDiameter_0198", e5.getText().toString().trim());
+        reportData.put("BossOD", e6.getText().toString().trim());
+        reportData.put("Chamfer_1x45", e7.isChecked() ? "Yes" : "No");
+        reportData.put("Chamfer_0_5x45", e8.isChecked() ? "Yes" : "No");
+        reportData.put("Chamfer_1x30", e9.isChecked() ? "Yes" : "No");
+        reportData.put("Radius_R0_3", e10.isChecked() ? "Yes" : "No");
+        reportData.put("Radius_R0_5", e11.isChecked() ? "Yes" : "No");
+        reportData.put("Radius_R10", e12.isChecked() ? "Yes" : "No");
+        reportData.put("Depth_19_2", e13.getText().toString().trim());
+        reportData.put("Depth_5_0", e14.getText().toString().trim());
+        reportData.put("Depth_1_8", e15.getText().toString().trim());
+        reportData.put("Depth_10", e16.getText().toString().trim());
+        reportData.put("Depth_6", e17.getText().toString().trim());
+        reportData.put("Depth_26_8", e18.getText().toString().trim());
+        reportData.put("SurfaceFinish_3_2", e19.isChecked() ? "Yes" : "No");
+        reportData.put("RunOut_0_03", e20.getText().toString().trim());
+        reportData.put("RunOut_0_05", e21.getText().toString().trim());
+        reportData.put("RunOut_0_3", e22.getText().toString().trim());
+        reportData.put("Squareness_0_03", e23.isChecked() ? "Yes" : "No");
+        reportData.put("Squareness_0_05", e24.isChecked() ? "Yes" : "No");
+        reportData.put("Squareness_0_3", e25.isChecked() ? "Yes" : "No");
+        reportData.put("TotalLength_90", e26.getText().toString().trim());
 
         // Get a reference to the "InProcessReport" collection
         CollectionReference reportsCollection = fStore.collection("InProcessReport");
@@ -204,14 +201,15 @@ public class MainActivityin extends AppCompatActivity {
         // Add the report data to the collection
         reportsCollection.add(reportData)
                 .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(MainActivityin.this, "Report submitted successfully!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivityin.this, R.string.report_submitted_success, Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(MainActivityin.this, "Failed to submit report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivityin.this, getString(R.string.report_submit_failure, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void clearFields() {
+        e.setText("");
         e1.setText("");
         e3.setText("");
         e4.setText("");
@@ -228,9 +226,6 @@ public class MainActivityin extends AppCompatActivity {
         e22.setText("");
         e26.setText("");
 
-
-
-        // Uncheck all checkboxes
         e2.setChecked(false);
         e7.setChecked(false);
         e8.setChecked(false);
@@ -242,7 +237,5 @@ public class MainActivityin extends AppCompatActivity {
         e23.setChecked(false);
         e24.setChecked(false);
         e25.setChecked(false);
-
     }
 }
-

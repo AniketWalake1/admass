@@ -38,4 +38,9 @@
 
     <string name="last"><![CDATA[ DO YOU WANT TO SUBMIT OR CHECK ONCE AGAIN ? \n
 \n]]></string>
+    <string name="first_shift">1st Shift</string>
+    <string name="second_shift">2nd Shift</string>
+    <string name="third_shift">3rd Shift</string>
+    <string name="report_submitted_success">Report submitted successfully!</string>
+    <string name="report_submit_failure">Failed to submit report: %1$s</string>
 </resources>
