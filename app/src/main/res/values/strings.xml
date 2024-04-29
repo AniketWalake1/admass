@@ -43,4 +43,10 @@
     <string name="third_shift">3rd Shift</string>
     <string name="report_submitted_success">Report submitted successfully!</string>
     <string name="report_submit_failure">Failed to submit report: %1$s</string>
+    <string name="end_shift">End Shift</string>
+    <string name="num">Enter the Number of Jobs Completed</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="jobs_completed_saved">Jobs completed saved to Firestore</string>
+    <string name="jobs_completed_save_failure">Failed to save jobs completed: %1$s</string>
 </resources>

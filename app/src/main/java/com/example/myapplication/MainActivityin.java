@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -10,16 +11,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -32,9 +36,10 @@ public class MainActivityin extends AppCompatActivity {
 
     private Button comp, logout, submitRecord;
     private FirebaseUser user;
-    private TextView textView, textView1, shift, todayDateTextView, time;
+    TextView textView, textView1, shift1, todayDateTextView, time, target;
     private FirebaseFirestore fStore;
     private String userId;
+    private DatabaseReference databaseReference;
 
     // EditText references for data collection
     private EditText e, e1, e3, e4, e5, e6, e13, e14, e15, e16, e17, e18, e20, e21, e22, e26;
@@ -61,10 +66,11 @@ public class MainActivityin extends AppCompatActivity {
         logout = findViewById(R.id.button7);
         textView = findViewById(R.id.user1);
         textView1 = findViewById(R.id.user2);
-        shift = findViewById(R.id.shiftshow);
+        shift1 = findViewById(R.id.shiftshow);
         time = findViewById(R.id.time1);
         submitRecord = findViewById(R.id.SubmitRecord);
         todayDateTextView = findViewById(R.id.todaysDateTextView);
+        target = findViewById(R.id.targetshow);
         DocumentReference documentReference = fStore.collection("users").document(userId);
         documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
             @Override
@@ -81,11 +87,12 @@ public class MainActivityin extends AppCompatActivity {
 
         // Set the user's email in the textView
         textView.setText(user.getEmail());
+        retrieveTarget();
 
         // Get today's date and format it
         Calendar calendar = Calendar.getInstance();
         Date todayDate = calendar.getTime();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String formattedDate = dateFormat.format(todayDate);
         todayDateTextView.setText(formattedDate);
 
@@ -121,11 +128,7 @@ public class MainActivityin extends AppCompatActivity {
 
         updateShiftBasedOnTime();
 
-        logout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(MainActivityin.this, MainActivity.class));
-            finish();
-        });
+        logout.setOnClickListener(v -> showEndShiftDialog());
 
         comp.setOnClickListener(v -> {
             comp.setBackgroundColor(getResources().getColor(R.color.blue));
@@ -136,8 +139,40 @@ public class MainActivityin extends AppCompatActivity {
             saveReportToFirestore();
             clearFields();
         });
-    }
 
+        // Initialize Firestore
+
+
+// Query the "targets" collection for documents where date and shift match the current values
+
+    }
+    private void retrieveTarget() {
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+
+// Get the current date and shift
+        String currentDate = todayDateTextView.getText().toString();
+        String currentShift = shift1.getText().toString();
+        CollectionReference targetsRef = fStore.collection("targets");
+
+        targetsRef
+                .whereEqualTo("date", currentDate)
+                .whereEqualTo("shift", currentShift)
+                .limit(1)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        QueryDocumentSnapshot document = (QueryDocumentSnapshot) task.getResult().getDocuments().get(0);
+                        if (document.exists()) {
+                            int targetValue = document.getLong("targetValue").intValue();
+                            target.setText(String.valueOf(targetValue));
+                        } else {
+                            target.setText("No target found for this date and shift.");
+                        }
+                    } else {
+                        // Handle error (optional: display message)
+                    }
+                });
+    }
     private void setupFirebase() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         user = auth.getCurrentUser();
@@ -150,11 +185,11 @@ public class MainActivityin extends AppCompatActivity {
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
 
         if (hourOfDay >= 8 && hourOfDay < 16) {
-            shift.setText(R.string.first_shift);
+            shift1.setText(R.string.first_shift);
         } else if (hourOfDay >= 16 && hourOfDay < 22) {
-            shift.setText(R.string.second_shift);
+            shift1.setText(R.string.second_shift);
         } else {
-            shift.setText(R.string.third_shift);
+            shift1.setText(R.string.third_shift);
         }
     }
 
@@ -164,7 +199,7 @@ public class MainActivityin extends AppCompatActivity {
 
         // Get values from EditTexts and format checkboxes
         reportData.put("time", time.getText().toString().trim());
-        reportData.put("Shift", shift.getText().toString().trim());
+        reportData.put("Shift", shift1.getText().toString().trim());
         reportData.put("Date", todayDateTextView.getText().toString().trim());
         reportData.put("OpName", textView1.getText().toString().trim());
         reportData.put("JobNumber", e.getText().toString().trim());
@@ -237,5 +272,57 @@ public class MainActivityin extends AppCompatActivity {
         e23.setChecked(false);
         e24.setChecked(false);
         e25.setChecked(false);
+    }
+    private void showEndShiftDialog() {
+        // Create a new dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.end_shift);
+
+        // Create an EditText to get the number of jobs completed
+        EditText jobsCompletedInput = new EditText(this);
+        jobsCompletedInput.setHint(R.string.num);
+        jobsCompletedInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(jobsCompletedInput);
+
+        builder.setPositiveButton(R.string.save, (dialog, which) -> {
+            // Get the number of jobs completed from the input
+            int jobsCompleted = Integer.parseInt(jobsCompletedInput.getText().toString());
+            saveJobsCompletedToFirestore(jobsCompleted);
+        });
+
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void saveJobsCompletedToFirestore(int jobsCompleted) {
+        // Get the current user's name and shift
+        String operatorName = textView1.getText().toString();
+        String shift = shift1.getText().toString();
+        String date = todayDateTextView.getText().toString();
+
+        // Create a map to store the data
+        Map<String, Object> jobCompletedData = new HashMap<>();
+        jobCompletedData.put("operatorName", operatorName);
+        jobCompletedData.put("shift", shift);
+        jobCompletedData.put("jobsCompleted", jobsCompleted);
+        jobCompletedData.put("date", date);
+
+        // Get a reference to the "JobCompleted" collection
+        CollectionReference jobCompletedCollection = fStore.collection("JobCompleted");
+
+        // Add the data to the collection
+        jobCompletedCollection.add(jobCompletedData)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(MainActivityin.this, R.string.jobs_completed_saved, Toast.LENGTH_SHORT).show();
+                    FirebaseAuth.getInstance().signOut();
+                    Intent intent= new Intent(MainActivityin.this,MainActivity.class);
+                    startActivity(intent);
+
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(MainActivityin.this, getString(R.string.jobs_completed_save_failure, e.getMessage()), Toast.LENGTH_SHORT).show();
+                });
+
     }
 }
