@@ -139,12 +139,6 @@ public class MainActivityin extends AppCompatActivity {
             saveReportToFirestore();
             clearFields();
         });
-
-        // Initialize Firestore
-
-
-// Query the "targets" collection for documents where date and shift match the current values
-
     }
     private void retrieveTarget() {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
@@ -169,7 +163,7 @@ public class MainActivityin extends AppCompatActivity {
                             target.setText("No target found for this date and shift.");
                         }
                     } else {
-                        // Handle error (optional: display message)
+                        Toast.makeText(MainActivityin.this, R.string.report_submitted_success, Toast.LENGTH_SHORT).show();
                     }
                 });
     }

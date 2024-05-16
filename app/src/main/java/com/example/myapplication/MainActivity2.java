@@ -15,6 +15,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+// Your imports here
+
 public class MainActivity2 extends AppCompatActivity {
 
     private Button loginButton, backButton;
@@ -42,7 +44,7 @@ public class MainActivity2 extends AppCompatActivity {
         // Login button click listener
         loginButton.setOnClickListener(v -> {
             progressBar.setVisibility(View.VISIBLE);
-            String email = emailEditText.getText().toString().trim(); // Improved with trim()
+            String email = emailEditText.getText().toString().trim();
             String password = passwordEditText.getText().toString().trim();
 
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -55,17 +57,11 @@ public class MainActivity2 extends AppCompatActivity {
                     .addOnCompleteListener(this, task -> {
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            String userId = user.getUid();
 
-                            fStore.collection("users").document(userId)
-                                    .addSnapshotListener(this, (documentSnapshot, e) -> {
-                                        if (documentSnapshot != null && documentSnapshot.exists()) {
-                                            Toast.makeText(MainActivity2.this, "Authentication Successful.", Toast.LENGTH_SHORT).show();
-                                            Intent intent = new Intent(MainActivity2.this, MainActivity4.class);
-                                            startActivity(intent);
-                                        }
-                                    });
+                                                Toast.makeText(MainActivity2.this, "Authentication Successful.", Toast.LENGTH_SHORT).show();
+                                                Intent intent = new Intent(MainActivity2.this, MainActivity4.class);
+                                                startActivity(intent);
+
                         } else {
                             Toast.makeText(MainActivity2.this, "Authentication failed. Please check your credentials.", Toast.LENGTH_SHORT).show();
                         }
@@ -79,10 +75,16 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            startActivity(new Intent(this, MainActivity4.class));
-            finish();
+        try {
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            if (currentUser != null) {
+                startActivity(new Intent(this, MainActivity4.class));
+                finish();
+            }
+        } catch (NullPointerException e) {
+            // Handle potential NullPointerException
+            e.printStackTrace();
         }
     }
 }
+

@@ -1,7 +1,10 @@
 package com.example.myapplication;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -9,28 +12,24 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import java.util.Calendar;
 
 public class MainActivity4 extends AppCompatActivity {
 
-    Button logout, submit;
+    Button logout, submit, CheckAll;
     FirebaseAuth auth;
     FirebaseUser user;
     TextView textView, textView1, shift;
     FirebaseFirestore fStore;
     String userId;
-    CheckBox c1, c2, c3, c4, c5, c6, c7, c8, c9, c10;
+    CheckBox c2, c3, c4, c5, c6, c7, c8, c9, c10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +44,6 @@ public class MainActivity4 extends AppCompatActivity {
         fStore = FirebaseFirestore.getInstance();
         userId = auth.getCurrentUser().getUid();
         textView1 = findViewById(R.id.user2);
-        c1 = findViewById(R.id.c11);
         c2 = findViewById(R.id.c12);
         c3 = findViewById(R.id.c13);
         c4 = findViewById(R.id.c14);
@@ -57,22 +55,23 @@ public class MainActivity4 extends AppCompatActivity {
         c10 = findViewById(R.id.c20);
         shift=findViewById(R.id.shiftshow);
         submit = findViewById(R.id.sub);
+        CheckAll = findViewById(R.id.CheckAll);
         submit.setEnabled(false);
         updateShiftBasedOnTime();
 
         DocumentReference documentReference = fStore.collection("users").document(userId);
 
-        documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
-            @Override
-            public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (value != null && value.exists()) {
-                    textView1.setText(value.getString("fName"));
-                } else {
-                    // Handle the case when document does not exist or has null data
-                    // For example, set a default value for textView1
-                    textView1.setText("Default Name");
-                }
+        documentReference.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                textView1.setText(documentSnapshot.getString("fName"));
+            } else {
+                // Handle the case when document does not exist or has null data
+                // For example, set a default value for textView1
+                textView1.setText("Default Name");
             }
+        }).addOnFailureListener(e -> {
+            // Handle any errors that occurred during the query
+            Log.e(TAG, "Error fetching document: " + e.getMessage());
         });
 
         if (user == null) {
@@ -84,7 +83,6 @@ public class MainActivity4 extends AppCompatActivity {
         }
 
         // Set CheckBoxChangeListener for all checkboxes
-        c1.setOnCheckedChangeListener((buttonView, isChecked) -> checkBoxChangeListener(buttonView, isChecked));
         c2.setOnCheckedChangeListener((buttonView, isChecked) -> checkBoxChangeListener(buttonView, isChecked));
         c3.setOnCheckedChangeListener((buttonView, isChecked) -> checkBoxChangeListener(buttonView, isChecked));
         c4.setOnCheckedChangeListener((buttonView, isChecked) -> checkBoxChangeListener(buttonView, isChecked));
@@ -112,12 +110,27 @@ public class MainActivity4 extends AppCompatActivity {
                 startActivity(intent1);
             }
         });
+        CheckAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Set all checkboxes to checked state
+                c2.setChecked(true);
+                c3.setChecked(true);
+                c4.setChecked(true);
+                c5.setChecked(true);
+                c6.setChecked(true);
+                c7.setChecked(true);
+                c8.setChecked(true);
+                c9.setChecked(true);
+                c10.setChecked(true);
+            }
+        });
     }
 
     // Implement CheckBoxChangeListener
     private void checkBoxChangeListener(CompoundButton buttonView, boolean isChecked) {
         // Check if all checkboxes are checked
-        boolean allChecked = c1.isChecked() && c2.isChecked() && c3.isChecked()
+        boolean allChecked = c2.isChecked() && c3.isChecked()
                 && c4.isChecked() && c5.isChecked() && c6.isChecked()
                 && c7.isChecked() && c8.isChecked() && c9.isChecked() && c10.isChecked();
 

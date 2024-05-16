@@ -26,7 +26,7 @@ public class MainActivity5 extends AppCompatActivity {
     private float xDelta = 0.0f;
     private float yDelta = 0.0f;
 
-    private Button comp, in, logout;
+    private Button in, logout;
     private FirebaseUser user;
     private TextView textView, textView1, shift, time;
     private FirebaseFirestore fStore;
@@ -48,7 +48,6 @@ public class MainActivity5 extends AppCompatActivity {
     }
 
     private void initializeViews() {
-        comp = findViewById(R.id.b2);
         in = findViewById(R.id.b4);
         logout = findViewById(R.id.button7);
         textView = findViewById(R.id.user1);
@@ -73,11 +72,6 @@ public class MainActivity5 extends AppCompatActivity {
                     break;
             }
             return true;
-        });
-
-        comp.setOnClickListener(v -> {
-            comp.setBackgroundColor(getResources().getColor(R.color.blue));
-            startActivity(new Intent(MainActivity5.this, MainActivity5.class));
         });
 
         in.setOnClickListener(v -> {
